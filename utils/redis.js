@@ -12,7 +12,7 @@ class RedisClient {
 
   // check connection status and report
   isAlive() {
-    if (this.client.connected) {
+    if (this.client.connect) {
       return true;
     }
     return false;
