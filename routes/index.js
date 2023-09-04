@@ -6,12 +6,23 @@ import UsersController from "../controllers/UsersController";
 import AuthController from "../controllers/AuthController";
 import FilesController from "../controllers/FilesController";
 
+// reports endpoints
 router.get("/status", AppController.getStatus);
 router.get("/stats", AppController.getStats);
+
+// creates new user endpoint
 router.post("/users", UsersController.postNew);
+
+// Authentication endpoints
 router.get("/connect", AuthController.getConnect);
 router.get("/disconnect", AuthController.getDisconnect);
 router.get("/users/me", UsersController.getMe);
+
+// Create files endpoint
 router.post("/files", FilesController.postUpload);
+
+// File retrieval endpoints
+router.get("/files/:id", FilesController.getShow);
+router.get("/files", FilesController.getIndex);
 
 module.exports = router;
