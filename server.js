@@ -1,11 +1,16 @@
-import express from "express"
+import express from "express";
+import helmet from "helmet"; // Import helmet
 import router from "./routes/index";
 
 const app = express();
 
+// Use helmet to set various security headers
+app.use(helmet());
+
 const port = process.env.PORT || 5000;
 
-app.use(express.json());
+// Middleware to parse JSON bodies
+app.use(express.json({ limit: '10mb' })); // Added limit for base64 uploads if they are large
 app.use("/", router);
 
 const server = app.listen(port, () => {

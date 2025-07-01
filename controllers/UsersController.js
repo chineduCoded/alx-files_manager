@@ -1,13 +1,14 @@
-import sha1 from 'sha1';
+import bcrypt from 'bcrypt';
 import { ObjectID } from 'mongodb';
 import Queue from 'bull';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
 const userQueue = new Queue('userQueue', 'redis://127.0.0.1:6379');
+const SALT_ROUNDS = 10;
 
 class UsersController {
-  static postNew(request, response) {
+  static async postNew(request, response) {
     const { email } = request.body;
     const { password } = request.body;
 
@@ -21,22 +22,28 @@ class UsersController {
     }
 
     const users = dbClient.db.collection('users');
-    users.findOne({ email }, (err, user) => {
-      if (user) {
+    try {
+      const existingUser = await users.findOne({ email });
+      if (existingUser) {
         response.status(400).json({ error: 'Already exist' });
-      } else {
-        const hashedPassword = sha1(password);
-        users.insertOne(
-          {
-            email,
-            password: hashedPassword,
-          },
-        ).then((result) => {
-          response.status(201).json({ id: result.insertedId, email });
-          userQueue.add({ userId: result.insertedId });
-        }).catch((error) => console.log(error));
+        return;
       }
-    });
+
+      const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+      const result = await users.insertOne(
+        {
+          email,
+          password: hashedPassword,
+        },
+      );
+
+      response.status(201).json({ id: result.insertedId, email });
+      userQueue.add({ userId: result.insertedId });
+
+    } catch (error) {
+      console.error('Error in postNew:', error);
+      response.status(500).json({ error: 'Internal server error' });
+    }
   }
 
   static async getMe(request, response) {
